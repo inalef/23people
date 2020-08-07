@@ -17,8 +17,8 @@ api = Api(app)
 
 #Resource class to handle calls passing national_id
 class Person(Resource):
-    def get(self,national_id):
-        person = persons_ref.document(national_id).get()
+    def get(self,id):
+        person = persons_ref.document(id).get()
         return make_response(jsonify(person.to_dict()), 200)
 
 #Resource class to handle calls not passing GET arguments, such as PUT, POST and get all      
