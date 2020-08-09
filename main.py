@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, abort
 from flask_restful import Resource, Api
 import firebase_admin
 from firebase_admin import credentials, firestore, initialize_app
+from schema import Schema, And, Use, Optional
 
 # Firestore DB initialization
 cred = credentials.Certificate("people-ae72e-firebase-adminsdk-pksjb-b9f891908b.json")
@@ -15,17 +16,44 @@ app = Flask(__name__)
 #API Handler initialization
 api = Api(app)
 
+#Schema definition using schema lib from https://github.com/keleshev/schema
+schema = Schema({'nationalId': And(str, len),
+                  'name': And(str, len),
+                  'lastName': And(str, len),
+                   Optional('age'):  And(Use(int), lambda n: 1 <= n <= 99),
+                   Optional('originPlanet'): And(str, len),
+                   Optional('pictureUrl'): And(str, len)
+                })
+
 #Resource class to handle calls passing national_id
 class Person(Resource):
     def get(self,id):
         person = persons_ref.document(id).get()
-        return make_response(jsonify(person.to_dict()), 200)
+        if person.to_dict() :
+            return make_response(jsonify(person.to_dict()), 200)
+        else:
+            return make_response("", 404)
 
-#Resource class to handle calls not passing GET arguments, such as PUT, POST and get all      
+#Resource class to handle calls not passing GET arguments, such as an empty GET and POST
 class PersonList(Resource):
     def get(self):
         persons = [doc.to_dict() for doc in persons_ref.stream()]
         return make_response(jsonify(persons), 200)
+    
+    def post(self):
+        response = make_response("", 400)
+        if request.headers["Content-Type"] == "application/json":
+            try:
+                content = schema.validate(request.get_json())
+                response = make_response(content, 200)
+            except Exception as e:
+                #Validation error
+                print(e)
+                response = make_response("", 400)
+        else:
+            #Wrong header
+            response = make_response("", 400)
+        return response
 
 #Registering routes into the API handler    
 api.add_resource(Person,'/people/<id>')
