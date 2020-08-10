@@ -1,11 +1,22 @@
+import os, json
 from flask import Flask, request, jsonify, make_response, abort
 from flask_restful import Resource, Api
 import firebase_admin
 from firebase_admin import credentials, firestore, initialize_app
+from google.cloud import secretmanager
 from schema import Schema, And, Use, Optional
 
-# Firestore DB initialization
-cred = credentials.Certificate("people-ae72e-firebase-adminsdk-pksjb-b9f891908b.json")
+#Authenticating into GCP, and choosing project
+project_id = os.environ["GCP_PROJECT"]
+client = secretmanager.SecretManagerServiceClient()
+
+#Retrieving Firebase json key file stored in GCP Secret Manager
+name = client.secret_version_path(project_id, "firestore-key", "latest")
+response = client.access_secret_version(name)
+key = response.payload.data.decode("UTF-8")
+
+# Initializing Firestore DB with the key retrieved from Secret Manager
+cred = credentials.Certificate(json.loads(key))
 default_app = initialize_app(cred)
 db = firestore.client()
 persons_ref = db.collection('persons')
