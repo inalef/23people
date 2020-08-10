@@ -27,7 +27,7 @@ app = Flask(__name__)
 #API Handler initialization
 api = Api(app)
 
-#Schema definition using schema lib from https://github.com/keleshev/schema
+#Person Schema definition using schema lib from https://github.com/keleshev/schema
 schema = Schema({'nationalId': And(str, len),
                   'name': And(str, len),
                   'lastName': And(str, len),
@@ -52,17 +52,20 @@ class PersonList(Resource):
         return make_response(jsonify(persons), 200)
     
     def post(self):
-        response = make_response("", 400)
-        if request.headers["Content-Type"] == "application/json":
-            try:
-                content = schema.validate(request.get_json())
-                response = make_response(content, 200)
-            except Exception as e:
-                #Validation error
-                print(e)
-                response = make_response("", 400)
+        if request.headers["Content-Type"] == "application/json" and schema.is_valid(request.get_json()):
+            #Enters when header is correct AND JSON payload sent is correct
+            content = schema.validate(request.get_json())
+            id = content["nationalId"]
+            person = persons_ref.document(id).get()
+            if person.to_dict() :
+                #NationalId already exists in DB, return HTTP 500
+                response = make_response("", 500)
+            else:
+                #NationalId is not in DB, so create it and return HTTP 201
+                persons_ref.document(id).set(content)
+                response = make_response(content, 201)
         else:
-            #Wrong header
+            #JSON Schema Validation error
             response = make_response("", 400)
         return response
 
