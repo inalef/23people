@@ -7,7 +7,7 @@ from google.cloud import secretmanager
 from schema import Schema, And, Use, Optional
 
 #Authenticating into GCP, and choosing project
-project_id = os.environ["GCP_PROJECT"]
+project_id = os.environ["PROJECT_ID"]
 client = secretmanager.SecretManagerServiceClient()
 
 #Retrieving Firebase json key file stored in GCP Secret Manager
