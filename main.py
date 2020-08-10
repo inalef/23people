@@ -38,32 +38,50 @@ schema = Schema({'nationalId': And(str, len),
 
 #Resource class to handle calls passing national_id
 class Person(Resource):
+    #This method retrieves a single Person record from the DB
     def get(self,id):
         person = persons_ref.document(id).get()
         if person.to_dict() :
+            #ID is found in DB, retrieve object and return HTTP 200
             return make_response(jsonify(person.to_dict()), 200)
         else:
+            #ID is not found, return HTTP 404
             return make_response("", 404)
     
+    #This method updates an existing Person record in the DB
     def put(self,id):
-        #First, force the nationalId to be in the incoming JSON payload, as it is not optional in the schema definition
-        data = request.get_json()
-        data["nationalId"] = id
-        if request.headers["Content-Type"] == "application/json" and schema.is_valid(data):
-            #Enters when header is correct AND JSON payload sent is correct
-            content = schema.validate(data)
-            person = persons_ref.document(id).get()
-            if person.to_dict() :
-                #NationalId already exists in DB, so update it and return HTTP 201
-                persons_ref.document(id).update(content)
-                response = make_response(content, 200)
+        if request.headers["Content-Type"] == "application/json" :
+            #Enters if the content of the request is markd as JSON in the headers
+            #First, force the nationalId to be in the incoming JSON payload, as it is not optional in the schema definition
+            data = request.get_json()
+            data["nationalId"] = id
+            if schema.is_valid(data):
+                #Enters when JSON payload sent is correct
+                content = schema.validate(data)
+                person = persons_ref.document(id).get()
+                if person.to_dict() :
+                    #NationalId already exists in DB, so update it and return HTTP 200
+                    persons_ref.document(id).update(content)
+                    return make_response(content, 200)
+                else:
+                    #NationalId is not in DB, return HTTP 404
+                    return make_response("", 404)
             else:
-                #NationalId is not in DB, return HTTP 404
-                response = make_response("", 404)
+                #Schema validation error
+                return make_response("", 400)
         else:
             #Header validation error
-            response = make_response("", 400)
-        return response
+            return make_response("", 400)
+    
+    def delete(self,id):
+        person = persons_ref.document(id).get()
+        if person.to_dict() :
+            #ID is found in DB, delete object and return HTTP 200
+            persons_ref.document(id).delete()
+            return make_response("", 200)
+        else:
+            #ID is not found, return HTTP 404
+            return make_response("", 404)
 
 #Resource class to handle calls not passing GET arguments, such as an empty GET and POST
 class PersonList(Resource):
@@ -79,15 +97,14 @@ class PersonList(Resource):
             person = persons_ref.document(id).get()
             if person.to_dict() :
                 #NationalId already exists in DB, return HTTP 500
-                response = make_response("", 500)
+                return make_response("", 500)
             else:
                 #NationalId is not in DB, so create it and return HTTP 201
                 persons_ref.document(id).set(content)
-                response = make_response(content, 201)
+                return make_response(content, 201)
         else:
             #JSON Schema Validation error
-            response = make_response("", 400)
-        return response
+            return make_response("", 400)
 
 #Registering routes into the API handler    
 api.add_resource(Person,'/people/<id>')
