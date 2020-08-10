@@ -1,0 +1,4 @@
+steps:
+- name: '23people'
+  args: ['app', 'deploy']
+  timeout: '60s'
