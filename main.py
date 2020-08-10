@@ -29,8 +29,8 @@ api = Api(app)
 
 #Person Schema definition using schema lib from https://github.com/keleshev/schema
 schema = Schema({'nationalId': And(str, len),
-                  'name': And(str, len),
-                  'lastName': And(str, len),
+                   Optional('name'): And(str, len),
+                   Optional('lastName'): And(str, len),
                    Optional('age'):  And(Use(int), lambda n: 1 <= n <= 99),
                    Optional('originPlanet'): And(str, len),
                    Optional('pictureUrl'): And(str, len)
@@ -44,6 +44,26 @@ class Person(Resource):
             return make_response(jsonify(person.to_dict()), 200)
         else:
             return make_response("", 404)
+    
+    def put(self,id):
+        #First, force the nationalId to be in the incoming JSON payload, as it is not optional in the schema definition
+        data = request.get_json()
+        data["nationalId"] = id
+        if request.headers["Content-Type"] == "application/json" and schema.is_valid(data):
+            #Enters when header is correct AND JSON payload sent is correct
+            content = schema.validate(data)
+            person = persons_ref.document(id).get()
+            if person.to_dict() :
+                #NationalId already exists in DB, so update it and return HTTP 201
+                persons_ref.document(id).update(content)
+                response = make_response(content, 200)
+            else:
+                #NationalId is not in DB, return HTTP 404
+                response = make_response("", 404)
+        else:
+            #Header validation error
+            response = make_response("", 400)
+        return response
 
 #Resource class to handle calls not passing GET arguments, such as an empty GET and POST
 class PersonList(Resource):
