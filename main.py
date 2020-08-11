@@ -115,6 +115,5 @@ class PersonList(Resource):
 api.add_resource(Person,'/people/<id>')
 api.add_resource(PersonList,'/people')
 
-
 if __name__ == '__main__':
     app.run(debug=True)
