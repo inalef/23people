@@ -11,4 +11,4 @@ RUN pip install -r requirements.txt
 ENV PORT 50001
 EXPOSE $PORT
 ENV FLASK_APP=main.py
-CMD flask run --port=$PORT
+CMD flask run --port=$PORT --host=0.0.0.0
