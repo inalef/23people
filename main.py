@@ -75,8 +75,8 @@ class Person(Resource):
             #Header validation error
             return make_response("", 400)
     
-    def delete(self,id):
     #This method deletes an existing Person document from the collection
+    def delete(self,id):
         person = persons_ref.document(id).get()
         if person.to_dict() :
             #ID is found, delete object and return HTTP 200
@@ -88,13 +88,13 @@ class Person(Resource):
 
 #Resource class to handle GET and POST calls, without providing nationalId
 class PersonList(Resource):
-    def get(self):
     #Just list all items in persons collection
+    def get(self):
         persons = [doc.to_dict() for doc in persons_ref.stream()]
         return make_response(jsonify(persons), 200)
     
-    def post(self):
     #Upon receiving a JSON Payload, this method will create a new document with the person information
+    def post(self):
         if request.headers["Content-Type"] == "application/json" and schema.is_valid(request.get_json()):
             #Enters when header is correct AND JSON payload sent is correct
             content = schema.validate(request.get_json())
