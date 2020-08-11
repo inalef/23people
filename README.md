@@ -170,7 +170,7 @@ Both deployments are exposed and are secured and published with Apigee. Since th
 
 ### App Engine Endpoint
 
-[https://gbenavid-eval-test.apigee.net/23people/people](https://gbenavid-eval-test.apigee.net/23people/people)
+[https://gbenavid-eval-test.apigee.net/gke-api/people](https://gbenavid-eval-test.apigee.net/23people/people)
 
 ## Meta
 
