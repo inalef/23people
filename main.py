@@ -1,5 +1,5 @@
 import os, json
-from flask import Flask, request, jsonify, make_response, abort
+from flask import Flask, request, jsonify, make_response
 from flask_restful import Resource, Api
 import firebase_admin
 from firebase_admin import credentials, firestore, initialize_app
@@ -7,24 +7,26 @@ from google.cloud import secretmanager
 from schema import Schema, And, Use, Optional
 
 #Authenticating into GCP, and choosing project
-project_id = os.environ["GOOGLE_CLOUD_PROJECT"]
 client = secretmanager.SecretManagerServiceClient()
+project_id = os.environ["GOOGLE_CLOUD_PROJECT"]
 
-#Retrieving Firebase json key file stored in GCP Secret Manager
+#Retrieving latest version of Firebase json key file named 'firebase-key' from GCP Secret Manager
 name = client.secret_version_path(project_id, "firestore-key", "latest")
 response = client.access_secret_version(name)
-key = response.payload.data.decode("UTF-8")
+key = response.payload.data.decode("UTF-8") #storing file contents in key variable
 
-# Initializing Firestore DB with the key retrieved from Secret Manager
+# Initializing Firebase App with the key retrieved from Secret Manager
 cred = credentials.Certificate(json.loads(key))
 default_app = initialize_app(cred)
+
+#Accessing Firestore DB and getting reference to persons document
 db = firestore.client()
 persons_ref = db.collection('persons')
 
 #Flask App initialization
 app = Flask(__name__)
 
-#API Handler initialization
+#Flask API Handler initialization
 api = Api(app)
 
 #Person Schema definition using schema lib from https://github.com/keleshev/schema
@@ -36,7 +38,7 @@ schema = Schema({'nationalId': And(str, len),
                    Optional('pictureUrl'): And(str, len)
                 })
 
-#Resource class to handle calls passing national_id
+#Resource class to handle GET, PUT and DELETE calls passing nationalId
 class Person(Resource):
     #This method retrieves a single Person record from the DB
     def get(self,id):
@@ -83,9 +85,10 @@ class Person(Resource):
             #ID is not found, return HTTP 404
             return make_response("", 404)
 
-#Resource class to handle calls not passing GET arguments, such as an empty GET and POST
+#Resource class to handle GET and POST calls, without providing nationalId
 class PersonList(Resource):
     def get(self):
+        #Just list all items in persons document
         persons = [doc.to_dict() for doc in persons_ref.stream()]
         return make_response(jsonify(persons), 200)
     
