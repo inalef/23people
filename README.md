@@ -76,6 +76,8 @@ metadata:
 
 With this, Secret Manager can be accessed in order to retrieve the key.json file needed to authenticate into the Firestore database. ```firestore-key``` is the name given to the file stored in Secret Manager.
 
+![](images/secretmanager.png)
+
 ```python
 #Retrieving latest version of Firebase json key file named 'firebase-key' from GCP Secret Manager
 name = client.secret_version_path(project_id, "firestore-key", "latest")
