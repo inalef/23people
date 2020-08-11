@@ -106,7 +106,7 @@ In the spirit of extending the example, two automatic deployments were configure
 Both ```cloudbuild.yaml``` and ```cloudbuild-gke.yaml``` are in this repo.
 
 ## GKE Deployment
-In the image, the first trigger called GKE-deployment will build and deploy in Kubernetes (GKE), automatically when there are pushes into the master branch of this repo. The deployment runs on top of a cluster of 2 Compute Engine VMs, with 1 Kubernete pod in each.
+In the image, the first trigger called GKE-deployment will build and deploy in Kubernetes (GKE), automatically when there are pushes into the master branch of this repo. The deployment runs on top of a cluster of two Compute Engine VMs, with one Kubernete pod in each. This provides availability even when a new deployment is undergoing.
 
 ![](images/cluster.png)
 
@@ -160,6 +160,17 @@ status:
 
 The second trigger listed before, named ```App-engine-deployment```, will trigger the deployment on pushes into a specific branch. App Engine deployment is very straightforward, as it is easily exposed to the internet using ```gcloud app deploy```. This is given also in ```cloudbuild.yaml``` file present in this repo.
 
+# Testing
+
+Both deployments are exposed and are secured and published with Apigee. Since this is just an example, both deployments are served by the same Firestore database.
+
+### GKE Endpoint
+
+[https://gbenavid-eval-test.apigee.net/gke-api/people](https://gbenavid-eval-test.apigee.net/gke-api/people)
+
+### App Engine Endpoint
+
+[https://gbenavid-eval-test.apigee.net/23people/people](https://gbenavid-eval-test.apigee.net/23people/people)
 
 ## Meta
 
