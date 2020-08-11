@@ -8,5 +8,7 @@ ENV APP_HOME /app
 WORKDIR $APP_HOME
 COPY . ./
 RUN pip install -r requirements.txt
-ENTRYPOINT ["python"]
-CMD ["main.py"]
+EXPOSE 8080
+ENV PORT 8080
+ENV FLASK_APP=main.py
+CMD flask run --port=$PORT
