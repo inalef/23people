@@ -19,7 +19,7 @@ key = response.payload.data.decode("UTF-8") #storing file contents in key variab
 cred = credentials.Certificate(json.loads(key))
 default_app = initialize_app(cred)
 
-#Accessing Firestore DB and getting reference to persons document
+#Accessing Firestore and getting reference to persons document
 db = firestore.client()
 persons_ref = db.collection('persons')
 
@@ -40,17 +40,17 @@ schema = Schema({'nationalId': And(str, len),
 
 #Resource class to handle GET, PUT and DELETE calls passing nationalId
 class Person(Resource):
-    #This method retrieves a single Person record from the DB
+    #This method retrieves a single Person document from the collection
     def get(self,id):
         person = persons_ref.document(id).get()
         if person.to_dict() :
-            #ID is found in DB, retrieve object and return HTTP 200
+            #ID is found, retrieve object and return HTTP 200
             return make_response(jsonify(person.to_dict()), 200)
         else:
             #ID is not found, return HTTP 404
             return make_response("", 404)
     
-    #This method updates an existing Person record in the DB
+    #This method updates an existing Person document in the collection
     def put(self,id):
         if request.headers["Content-Type"] == "application/json" :
             #Enters if the content of the request is markd as JSON in the headers
@@ -62,11 +62,11 @@ class Person(Resource):
                 content = schema.validate(data)
                 person = persons_ref.document(id).get()
                 if person.to_dict() :
-                    #NationalId already exists in DB, so update it and return HTTP 200
+                    #NationalId already exists, so update it and return HTTP 200
                     persons_ref.document(id).update(content)
                     return make_response(content, 200)
                 else:
-                    #NationalId is not in DB, return HTTP 404
+                    #NationalId is not in the collection, return HTTP 404
                     return make_response("", 404)
             else:
                 #Schema validation error
@@ -76,9 +76,10 @@ class Person(Resource):
             return make_response("", 400)
     
     def delete(self,id):
+    #This method deletes an existing Person document from the collection
         person = persons_ref.document(id).get()
         if person.to_dict() :
-            #ID is found in DB, delete object and return HTTP 200
+            #ID is found, delete object and return HTTP 200
             persons_ref.document(id).delete()
             return make_response("", 200)
         else:
@@ -88,21 +89,22 @@ class Person(Resource):
 #Resource class to handle GET and POST calls, without providing nationalId
 class PersonList(Resource):
     def get(self):
-        #Just list all items in persons document
+    #Just list all items in persons collection
         persons = [doc.to_dict() for doc in persons_ref.stream()]
         return make_response(jsonify(persons), 200)
     
     def post(self):
+    #Upon receiving a JSON Payload, this method will create a new document with the person information
         if request.headers["Content-Type"] == "application/json" and schema.is_valid(request.get_json()):
             #Enters when header is correct AND JSON payload sent is correct
             content = schema.validate(request.get_json())
             id = content["nationalId"]
             person = persons_ref.document(id).get()
             if person.to_dict() :
-                #NationalId already exists in DB, return HTTP 500
+                #NationalId already exists the collection, return HTTP 500
                 return make_response("", 500)
             else:
-                #NationalId is not in DB, so create it and return HTTP 201
+                #NationalId is not in the collection, so create it and return HTTP 201
                 persons_ref.document(id).set(content)
                 return make_response(content, 201)
         else:
