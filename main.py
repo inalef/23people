@@ -108,7 +108,7 @@ class PersonList(Resource):
 
 #Registering routes into the API handler    
 api.add_resource(Person,'/people/<id>')
-api.add_resource(PersonList,'/people')
+#api.add_resource(PersonList,'/people')
 api.add_resource(PersonList,'/')
 
 
